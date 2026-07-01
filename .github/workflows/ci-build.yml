@@ -1,0 +1,42 @@
+name: "Build & Test"
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason"
+        required: true
+
+concurrency:
+  group: build
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x]
+    timeout-minutes: 5
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install NPM dependencies
+        run: npm install --ignore-scripts
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test-ci
+
+      - name: Run NPM pack
+        run: npm pack
