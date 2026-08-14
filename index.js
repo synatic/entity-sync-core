@@ -14,6 +14,7 @@ export {
   mapActionInputs,
   parseConfig,
   parsePlanOptions,
+  parseExecuteOptions,
   parseRoots,
 } from "./lib/config.js";
 export { createBranchName } from "./lib/branch-name.js";

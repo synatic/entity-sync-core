@@ -45,6 +45,7 @@ function toConfigValues(args) {
     previewFirst: args["preview-first"],
     previewOnly: args["preview-only"],
     failOnConflict: args["fail-on-conflict"],
+    executeOptions: args["execute-options"],
   };
 }
 
@@ -61,6 +62,7 @@ async function main() {
     console.error("Execute options:");
     console.error("  --api-url --api-key --dest-org-id --plan-path");
     console.error("  --preview-first --preview-only --fail-on-conflict");
+    console.error("  --execute-options '<json object>'");
     process.exit(1);
   }
 
