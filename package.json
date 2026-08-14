@@ -1,6 +1,6 @@
 {
   "name": "@synatic/entity-sync-core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Core Synatic entity sync logic — plan, preview, and execute against the entity-sync API",
   "type": "module",
   "main": "index.js",

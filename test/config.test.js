@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   parseConfig,
   parsePlanOptions,
+  parseExecuteOptions,
   parseRoots,
 } from "../lib/config.js";
 
@@ -50,6 +51,19 @@ describe("parsePlanOptions", function () {
 
   it("throws for non-object values", function () {
     assert.throws(() => parsePlanOptions("[]"), /must be a JSON object/);
+  });
+});
+
+describe("parseExecuteOptions", function () {
+  it("parses a valid JSON object", function () {
+    assert.deepEqual(
+      parseExecuteOptions('{"entityPolicies":{"parameter":{"onExist":"skip"}}}'),
+      { entityPolicies: { parameter: { onExist: "skip" } } }
+    );
+  });
+
+  it("throws for invalid JSON", function () {
+    assert.throws(() => parseExecuteOptions("{invalid"), /Invalid execute-options JSON/);
   });
 });
 
@@ -115,6 +129,20 @@ describe("parseConfig", function () {
     assert.equal(config.previewFirst, true);
     assert.equal(config.previewOnly, false);
     assert.equal(config.failOnConflict, true);
+  });
+
+  it("parses execute command with executeOptions", function () {
+    const config = parseConfig("execute", {
+      apiUrl: "https://api.example.com",
+      apiKey: "syn_api_test",
+      destOrgId: "507f1f77bcf86cd799439012",
+      planPath: ".synatic/plans/flow.json",
+      executeOptions: '{"exclude":{"parameter":{"names":["LocalOnly"]}}}',
+    });
+
+    assert.deepEqual(config.executeOptions, {
+      exclude: { parameter: { names: ["LocalOnly"] } },
+    });
   });
 
   it("rejects invalid command", function () {

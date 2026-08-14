@@ -100,6 +100,35 @@ describe("EntitySyncApiClient", function () {
     assert.equal(capturedBody.roots.length, 2);
   });
 
+  it("sends execute options on preview and execute", async function () {
+    const plan = {
+      planId: "plan-1",
+      steps: [{ order: 0, entityType: "parameter", sourceId: "P1" }],
+    };
+    const options = { entityPolicies: { parameter: { onExist: "skip" } } };
+    let previewBody = null;
+    let executeBody = null;
+
+    const { client } = createMockClient({
+      "POST https://api.example.com/v1/organizations/acme-prod/entity-sync/preview":
+        async (req) => {
+          previewBody = req.json;
+          return { statusCode: 200, body: { summary: {}, actions: [] } };
+        },
+      "POST https://api.example.com/v1/organizations/acme-prod/entity-sync/execute":
+        async (req) => {
+          executeBody = req.json;
+          return { statusCode: 200, body: { runId: "run-1", summary: {} } };
+        },
+    });
+
+    await client.preview("acme-prod", plan, options);
+    await client.execute("acme-prod", plan, options);
+
+    assert.deepEqual(previewBody.options, options);
+    assert.deepEqual(executeBody.options, options);
+  });
+
   it("throws a readable error for failed preview", async function () {
     const { client } = createMockClient({
       "POST https://api.example.com/v1/organizations/acme-prod/entity-sync/preview":
