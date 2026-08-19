@@ -53,6 +53,19 @@ Example:
 entity-sync plan ... --plan-options '{"includeReverseDeps":true,"adoptNativeOnNameMatch":false}'
 ```
 
+## Plan graph
+
+Each step lists:
+
+| Field | Meaning |
+| ----- | ------- |
+| `dependsOn` | Hard dependencies (buffers, parameters, data stores, …). These drive topological order. A cycle among hard deps fails plan generation (`cycle_detected`). |
+| `softDependsOn` | Other flows referenced via flow-call (not self). These do **not** affect sort, so recursive and mutually recursive flows can be planned. |
+
+At execute time, `softDependsOn` still cascade-skips callers when a callee is **excluded**. Policy-skip of a callee does not cascade; the caller is rewritten to the existing destination id.
+
+Flow-call `flowId`s in step payloads may still point at source ids on first write. After destination ids exist, a rewire pass remaps them. Leftover ids (callee excluded or outside the plan) are left unchanged and are not treated as failures.
+
 ## Execute / preview options
 
 Applied at **preview or execute time** (request body `options`, merged over `plan.options`). Lets one committed plan behave differently per destination.
@@ -60,15 +73,15 @@ Applied at **preview or execute time** (request body `options`, merged over `pla
 | Option                    | Description |
 | ------------------------- | ----------- |
 | `exclude`                 | Blacklist: skip named entities by type; cascade-blocks dependents |
-| `entityPolicies.<type>.onExist` | `update` (default) or `skip` — skip preserves dest content and keeps `idMap` for dependents |
+| `entityPolicies.<type>.onExist` | `update` or `skip`. **Parameters default to `skip`** (preserve dest values). Other types default to `update`. Skip keeps dest content and `idMap` for dependents. |
 | `adoptNativeOnNameMatch`  | Overrides the plan-time value for this run |
 
-Example — skip customized downstream parameters, sync everything else:
+Example — overwrite destination parameters (opt in; skip is the default):
 
 ```json
 {
   "entityPolicies": {
-    "parameter": { "onExist": "skip" }
+    "parameter": { "onExist": "update" }
   }
 }
 ```
@@ -88,14 +101,14 @@ CLI:
 
 ```bash
 entity-sync execute ... \
-  --execute-options '{"entityPolicies":{"parameter":{"onExist":"skip"}}}'
+  --execute-options '{"entityPolicies":{"parameter":{"onExist":"update"}}}'
 ```
 
 Programmatic:
 
 ```js
-await client.preview(destOrgId, plan, { entityPolicies: { parameter: { onExist: "skip" } } });
-await client.execute(destOrgId, plan, { entityPolicies: { parameter: { onExist: "skip" } } });
+await client.preview(destOrgId, plan, { entityPolicies: { parameter: { onExist: "update" } } });
+await client.execute(destOrgId, plan, { entityPolicies: { parameter: { onExist: "update" } } });
 ```
 
 ## CLI
@@ -113,7 +126,7 @@ entity-sync execute \
   --api-key syn_api_... \
   --dest-org-id 507f1f77bcf86cd799439012 \
   --plan-path .synatic/plans/plan.json \
-  --execute-options '{"entityPolicies":{"parameter":{"onExist":"skip"}}}'
+  --execute-options '{"entityPolicies":{"parameter":{"onExist":"update"}}}'
 ```
 
 ## Programmatic usage
