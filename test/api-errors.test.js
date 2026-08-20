@@ -35,7 +35,36 @@ describe("formatApiError", function () {
     assert.match(message, /"rootType":"flow"/);
     assert.match(message, /Cannot read properties of undefined/);
     assert.match(message, /Code: internal_error/);
+    assert.match(message, /Response body:/);
+    assert.match(message, /"statusCode":500/);
     assert.match(message, /server-side error from the Synatic API/);
+  });
+
+  it("includes raw response body even when message is a generic Internal server error", function () {
+    const message = formatApiError(
+      {
+        statusCode: 500,
+        body: {
+          statusCode: 500,
+          message: "Internal server error",
+          error: {
+            name: "TypeError",
+            message: "Cannot read properties of null (reading '_id')",
+          },
+        },
+      },
+      "Preview",
+      {
+        method: "POST",
+        url: "https://api.example.com/v1/organizations/acme/entity-sync/preview",
+        requestBody: { planId: "plan-1", stepCount: 193 },
+      }
+    );
+
+    assert.match(message, /Preview failed \(HTTP 500\)/);
+    assert.match(message, /Message: Internal server error/);
+    assert.match(message, /Details:.*"Cannot read properties of null/);
+    assert.match(message, /Response body:.*"Internal server error"/);
   });
 
   it("adds auth guidance for 403 responses", function () {
